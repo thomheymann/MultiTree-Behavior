@@ -493,7 +493,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			} else {
 				// Get node
 				if ( ($node = $this->_node($Model, $id)) === false ) {
-					return 0;
+					return false;
 				}
 			}
 			return ($node[$right]-$node[$left]-1)/2;
@@ -593,7 +593,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
-			return array();
+			return false;
 		}
 		// Conditions
 		$conditions = array(
@@ -621,7 +621,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
-			return array();
+			return false;
 		}
 		// Conditions
 		$conditions = array(
@@ -649,7 +649,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
-			return array();
+			return false;
 		}
 		// Get node's parent
 		return $Model->find('first', array(
@@ -670,7 +670,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
-			return array();
+			return false;
 		}
 		// Conditions
 		$conditions = array(
@@ -729,7 +729,7 @@ class MultiTreeBehavior extends ModelBehavior {
 
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
-			return array();
+			return false;
 		}
 		// if ( !empty($level) )
 		// 	return $node[$level];
@@ -755,9 +755,13 @@ class MultiTreeBehavior extends ModelBehavior {
 		if ( is_numeric($conditions) ) {
 			$results = $this->getChildren($Model, $conditions);
 		} else {
+			$order = array();
+			if ( !empty($root) )
+				$order[] = $Model->escapeField($root) => 'asc';
+			$order[] = $Model->escapeField($left) => 'asc';
 			$results = $Model->find('all', array(
 				'conditions' => $conditions,
-				'order' => array($Model->escapeField($left) => 'asc'),
+				'order' => $order,
 				'recursive' => $recursive,
 				));
 		}
