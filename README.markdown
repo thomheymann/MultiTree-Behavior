@@ -14,15 +14,17 @@ Use __InnoDB__ (or a different engine that supports transactions, otherwise you 
 ## Configuration
 ### Example 1
 The following config is meant for large trees that are often updated as well a retrieved. It keeps track of a tree that has root_id's and level caching enabled. It is ideal for e.g. Comment Trees
-<pre><code>class Comment extends AppModel {
-	var $name = 'Comment';
-	var $actsAs = array(
-		'MultiTree' => array(
-			'root' =>'root_id',
-			'level' =>'level'
-			)
-		);
-}</pre></code>
+
+	class Comment extends AppModel {
+		var $name = 'Comment';
+		var $actsAs = array(
+			'MultiTree' => array(
+				'root' =>'root_id',
+				'level' =>'level'
+				)
+			);
+	}
+
 #### Schema
 <pre><code>CREATE TABLE `comments` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -44,15 +46,17 @@ The following config is meant for large trees that are often updated as well a r
 ### Example 2
 This following config is meant for small trees that are mainly retrieved and not often updated. It keeps track of a tree without root_id's and level caching disabled. It is ideal for e.g. Category Trees
 [i]Note: This would also be the config for drop in's from the core Tree Behaviour[/i]
-<pre><code>class Category extends AppModel {
-	var $name = 'Comment';
-	var $actsAs = array(
-		'MultiTree' => array(
-			'root' => false,
-			'level' => false
-			)
-		);
-}</pre></code>
+
+	class Category extends AppModel {
+		var $name = 'Comment';
+		var $actsAs = array(
+			'MultiTree' => array(
+				'root' => false,
+				'level' => false
+				)
+			);
+	}
+
 #### Schema
 <pre><code>CREATE TABLE `categories` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -125,42 +129,48 @@ Get next siblings including the node itself
 
 ## Insert
 Insert new node as the last child of node 1
-<pre><code>$format = array(
-	'name' => 'Cat',
-	'parent_id' => 1
-	);
-$this->Category->save($format);</pre></code>
+
+	$format = array(
+		'name' => 'Cat',
+		'parent_id' => 1
+		);
+	$this->Category->save($format);
 
 Insert new node as the next sibling of node 4
-<pre><code>$format = array(
-	'name' => 'Lion',
-	'parent_id' => array('destination' => 4, 'position' => 'nextSibling')
-	);
-$this->Category->save($format);</pre></code>
+
+	$format = array(
+		'name' => 'Lion',
+		'parent_id' => array('destination' => 4, 'position' => 'nextSibling')
+		);
+	$this->Category->save($format);
 
 Not setting a parent_id or nulling it out will insert the node as a top level (root) node
-<pre><code>$format = array(
-	'name' => 'Animal',
-	'parent_id' => null
-	);
-$this->Category->save($format);</pre></code>
+
+	$format = array(
+		'name' => 'Animal',
+		'parent_id' => null
+		);
+	$this->Category->save($format);
 
 
 ## Move
-<pre><code>$this->Category->move(6, 12, 'firstChild'); // Move node 6 to be the first child of node 12
-$this->Category->move(6, 12, 'lastChild'); // Move node 6 to be the last child of node 12
-$this->Category->move(6, 12, 'prevSibling'); // You get the idea..
-$this->Category->move(6, 12, 'nextSibling');</pre></code>
+
+	$this->Category->move(6, 12, 'firstChild'); // Move node 6 to be the first child of node 12
+	$this->Category->move(6, 12, 'lastChild'); // Move node 6 to be the last child of node 12
+	$this->Category->move(6, 12, 'prevSibling'); // You get the idea..
+	$this->Category->move(6, 12, 'nextSibling');
 
 Move node 9 up by 2 (if possible, otherwise move as high up as possible)
-<pre><code>$this->Category->moveUp(9, 2);</pre></code>
+
+	$this->Category->moveUp(9, 2);
 
 Move node 9 down by 3 (if possible, otherwise move as low down as possible)
-<pre><code>$this->Category->moveDown(9, 3);</pre></code>
+
+	$this->Category->moveDown(9, 3);
 
 Will make node 6 a new top level (root) node
-<pre><code>$this->Category->move(6, null);</pre></code>
 
+	$this->Category->move(6, null);
 
 ## Delete
 <pre><code>$this->Category->delete(25); // Same as removeFromTree(25)</pre></code>
