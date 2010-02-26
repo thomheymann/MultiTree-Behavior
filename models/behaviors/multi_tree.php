@@ -757,8 +757,8 @@ class MultiTreeBehavior extends ModelBehavior {
 		} else {
 			$order = array();
 			if ( !empty($root) )
-				$order[] = $Model->escapeField($root) => 'asc';
-			$order[] = $Model->escapeField($left) => 'asc';
+				$order[$Model->escapeField($root)] = 'asc';
+			$order[$Model->escapeField($left)] = 'asc';
 			$results = $Model->find('all', array(
 				'conditions' => $conditions,
 				'order' => $order,
