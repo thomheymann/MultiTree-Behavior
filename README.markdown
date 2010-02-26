@@ -25,27 +25,28 @@ The following config is meant for large trees that are often updated as well a r
 			);
 	}
 
-#### Schema
-<pre><code>CREATE TABLE `comments` (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `title` varchar(128) NOT NULL default '',
-  `body` text NOT NULL,
-  `created` datetime default NULL,
-  `modified` datetime default NULL,
-  `parent_id` int(10) unsigned default NULL,
-  `root_id` int(10) unsigned default NULL,
-  `lft` mediumint(8) unsigned default NULL,
-  `rght` mediumint(8) unsigned default NULL,
-  `level` mediumint(8) unsigned default NULL,
-  PRIMARY KEY  (`id`),
-  KEY `rght` USING BTREE (`root_id`,`rght`,`lft`),
-  KEY `lft` USING BTREE (`root_id`,`lft`,`rght`),
-  KEY `parent_id` USING BTREE (`parent_id`,`sticky`,`created`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8</pre></code>
+#### Schema:
+
+	CREATE TABLE `comments` (
+	  `id` int(10) unsigned NOT NULL auto_increment,
+	  `title` varchar(128) NOT NULL default '',
+	  `body` text NOT NULL,
+	  `created` datetime default NULL,
+	  `modified` datetime default NULL,
+	  `parent_id` int(10) unsigned default NULL,
+	  `root_id` int(10) unsigned default NULL,
+	  `lft` mediumint(8) unsigned default NULL,
+	  `rght` mediumint(8) unsigned default NULL,
+	  `level` mediumint(8) unsigned default NULL,
+	  PRIMARY KEY  (`id`),
+	  KEY `rght` USING BTREE (`root_id`,`rght`,`lft`),
+	  KEY `lft` USING BTREE (`root_id`,`lft`,`rght`),
+	  KEY `parent_id` USING BTREE (`parent_id`,`sticky`,`created`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 ### Example 2
 This following config is meant for small trees that are mainly retrieved and not often updated. It keeps track of a tree without root_id's and level caching disabled. It is ideal for e.g. Category Trees
-[i]Note: This would also be the config for drop in's from the core Tree Behaviour[/i]
+_Note: This would also be the config for drop in's from the core Tree Behaviour_
 
 	class Category extends AppModel {
 		var $name = 'Comment';
@@ -57,18 +58,19 @@ This following config is meant for small trees that are mainly retrieved and not
 			);
 	}
 
-#### Schema
-<pre><code>CREATE TABLE `categories` (
-  `id` int(10) unsigned NOT NULL auto_increment,
-  `name` varchar(128) NOT NULL default '',
-  `parent_id` int(10) unsigned default NULL,
-  `lft` mediumint(6) unsigned default NULL,
-  `rght` mediumint(6) unsigned default NULL,
-  PRIMARY KEY  (`id`),
-  KEY `lft` USING BTREE (`lft`),
-  KEY `parent_id` USING BTREE (`parent_id`),
-  KEY `rght` USING BTREE (`rght`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8</pre></code>
+#### Schema:
+
+	CREATE TABLE `categories` (
+	  `id` int(10) unsigned NOT NULL auto_increment,
+	  `name` varchar(128) NOT NULL default '',
+	  `parent_id` int(10) unsigned default NULL,
+	  `lft` mediumint(6) unsigned default NULL,
+	  `rght` mediumint(6) unsigned default NULL,
+	  PRIMARY KEY  (`id`),
+	  KEY `lft` USING BTREE (`lft`),
+	  KEY `parent_id` USING BTREE (`parent_id`),
+	  KEY `rght` USING BTREE (`rght`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 
 ### Config defaults
@@ -82,54 +84,47 @@ level: level
 ## Traversing the tree
 ### Get parent
 Get parent based on Parent
-<pre><code>debug($this->Category->getParent(32));</pre></code>
+	debug($this->Category->getParent(32));
 
 Get parent based on Left/Right values
-<pre><code>debug($this->Category->getParentFromTree(32));</pre></code>
+	debug($this->Category->getParentFromTree(32));
 
 ### Get path
-<pre><code>debug($this->Category->getPath(32));</pre></code>
+	debug($this->Category->getPath(32));
 
 ### Get level
-<pre><code>debug($this->Category->getLevel(32));</pre></code>
+	debug($this->Category->getLevel(32));
 
 ### Get children
-<pre><code>debug($this->Category->getChildren(32));</pre></code>
+	debug($this->Category->getChildren(32));
 
 Get direct children only:
-<pre><code>debug($this->Category->getChildren(32, true));</pre></code>
+	debug($this->Category->getChildren(32, true));
 
 ### Get child count
-<pre><code>debug($this->Category->getChildCount(32));</pre></code>
+	debug($this->Category->getChildCount(32));
 
 ### Get siblings
-<pre><code>debug($this->Category->getSiblings(32));</pre></code>
-
-Get siblings including the node itself
-<pre><code>debug($this->Category->getSiblings(32, true));</pre></code>
+	debug($this->Category->getSiblings(32));
+	debug($this->Category->getSiblings(32, true)); // Get siblings including the node itself
 
 ### Get previous siblings
-<pre><code>debug($this->Category->getPrevSiblings(32));</pre></code>
-
-Get previous siblings including the node itself
-<pre><code>debug($this->Category->getPrevSiblings(32, true));</pre></code>
+	debug($this->Category->getPrevSiblings(32));
+	debug($this->Category->getPrevSiblings(32, true)); // Get previous siblings including the node itself
 
 ### Get next siblings
-<pre><code>debug($this->Category->getNextSiblings(32));</pre></code>
-
-Get next siblings including the node itself
-<pre><code>debug($this->Category->getNextSiblings(32, true));</pre></code>
+	debug($this->Category->getNextSiblings(32));
+	debug($this->Category->getNextSiblings(32, true)); // Get next siblings including the node itself
 
 ### Get previous sibling
-<pre><code>debug($this->Category->getPrevSibling(32));</pre></code>
+	debug($this->Category->getPrevSibling(32));
 
 ### Get next sibling
-<pre><code>debug($this->Category->getNextSibling(32));</pre></code>
-
+	debug($this->Category->getNextSibling(32));
 
 ## Insert
-Insert new node as the last child of node 1
 
+Insert new node as the last child of node 1
 	$format = array(
 		'name' => 'Cat',
 		'parent_id' => 1
@@ -173,21 +168,24 @@ Will make node 6 a new top level (root) node
 	$this->Category->move(6, null);
 
 ## Delete
-<pre><code>$this->Category->delete(25); // Same as removeFromTree(25)</pre></code>
+	$this->Category->delete(25); // Same as removeFromTree(25)
 
 This will delete node 25 and all its children
-<pre><code>$this->Category->removeFromTree(25);</pre></code>
+
+	$this->Category->removeFromTree(25);
 
 This will delete node 25 itself but if it has any children shift them one level up
-<pre><code>$this->Category->removeFromTree(25, false);</pre></code>
 
+	$this->Category->removeFromTree(25, false);
 
 ## Repair
 left and right values are broken but we have valid parent_id's
-<pre><code>$this->Category->repair('tree');</pre></code>
+
+	$this->Category->repair('tree');
 
 parent_id's are broken but we have valid left and right values
-<pre><code>$this->Category->repair('parent');</pre></code>
+
+	$this->Category->repair('parent');
 
 [1]: http://bakery.cakephp.org/articles/view/multitree-behavior
 [2]: http://book.cakephp.org/view/228/Basic-Usage
