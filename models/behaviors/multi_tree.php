@@ -10,7 +10,7 @@
  * @author Thomas Heymann
  * @link http://bakery.cakephp.org/articles/view/multitree-behavior
  * @link http://book.cakephp.org/view/228/Basic-Usage
- * @version	0.1
+ * @version	0.2a
  * @license	http://www.opensource.org/licenses/mit-license.php The MIT License
  * @package app
  * @subpackage app.models.behaviors
@@ -423,8 +423,6 @@ class MultiTreeBehavior extends ModelBehavior {
 			// We don't want this to actually loop
 			break;
 		}
-			// $Model->getDataSource()->rollback($Model);
-			// return true;
 		
 		// Commit
 		if ( $commit ) {
@@ -441,14 +439,19 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @access public
 	 * @return boolean
 	 **/
-	function getChildren(&$Model, $id, $direct = false, $fields = null, $recursive = null) {
+	function getChildren(&$Model, $id, $direct = false, $includeNode = false, $fields = null, $recursive = null) {
 		extract($this->settings[$Model->alias]);
 		
 		if ( $direct ) {
+			$conditions = array($Model->escapeField($parent) => $id);
+			if ( $includeNode ) {
+				$conditions[$Model->escapeField()] = $id;
+				$conditions = array('OR' => $conditions);
+			}
 			// Get node's direct children
 			return $Model->find('all', array(
 				'fields' => $fields,
-				'conditions' => array($Model->escapeField($parent) => $id),
+				'conditions' => $conditions,
 				'order' => array($Model->escapeField($left) => 'asc'),
 				'recursive' => $recursive,
 				));
@@ -459,11 +462,17 @@ class MultiTreeBehavior extends ModelBehavior {
 			return array();
 		}
 		// Conditions
-		$conditions = array(
-			// $Model->escapeField($root) => $node[$root],
-			$Model->escapeField($left).' >' => $node[$left],
-			$Model->escapeField($right).' <' => $node[$right]
-			);
+		if ( $includeNode ) {
+			$conditions = array(
+				$Model->escapeField($left).' >=' => $node[$left],
+				$Model->escapeField($right).' <=' => $node[$right]
+				);
+		} else {
+			$conditions = array(
+				$Model->escapeField($left).' >' => $node[$left],
+				$Model->escapeField($right).' <' => $node[$right]
+				);
+		}
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $node[$root];
 		// Get node's children
