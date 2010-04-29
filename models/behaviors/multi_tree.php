@@ -31,7 +31,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		'root' => 'root_id', // optional, allow multiple trees per table
 		'level' => 'level', // optional, cache levels
 		'dependent' => false,
-		'callbacks' => false,
+		'callbacks' => true,
 		
 		// Other
 		'recursive' => -1,
