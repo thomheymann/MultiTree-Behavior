@@ -30,6 +30,8 @@ class MultiTreeBehavior extends ModelBehavior {
 		'right' => 'rght',
 		'root' => 'root_id', // optional, allow multiple trees per table
 		'level' => 'level', // optional, cache levels
+		'dependent' => false,
+		'callbacks' => false,
 		
 		// Other
 		'recursive' => -1,
@@ -139,6 +141,23 @@ class MultiTreeBehavior extends ModelBehavior {
 			$this->move($Model, $Model->id, $this->settings[$Model->alias]['__move']);
 			$this->settings[$Model->alias]['__move'] = false;
 		}
+		if (!empty($this->settings[$Model->alias]['root'])) {
+			$newTrees = $Model->find('all', array(
+				'conditions' => array(
+					$Model->escapeField($this->settings[$Model->alias]['root']) => NULL,
+					$Model->escapeField($this->settings[$Model->alias]['parent']) => NULL
+				),
+				'callbacks' => false
+			));
+			foreach ($newTrees as &$newTree) {
+				$newTree[$Model->alias][$this->settings[$Model->alias]['root']] = $newTree[$Model->alias]['id'];
+			}
+			foreach ($newTrees as $key => $value) {
+				$newTrees[$key] = $value[$Model->alias];
+			}
+			$newTrees = array($Model->alias => $newTrees);
+			$Model->saveAll($newTrees[$Model->alias], array('callbacks' => false));
+		}
 	}
 	
 	/**
@@ -159,7 +178,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
 	function afterDelete(&$Model) {
 		if ( $this->settings[$Model->alias]['__delete'] !== false ) {
-			$this->removeFromTree($Model, $this->settings[$Model->alias]['__delete']);
+			$this->removeFromTree($Model, $this->settings[$Model->alias]['__delete'], $this->settings[$Model->alias]['dependent']);
 			$this->settings[$Model->alias]['__delete'] = false;
 		}
 	}
@@ -282,7 +301,7 @@ class MultiTreeBehavior extends ModelBehavior {
 				$start = $this->_max($Model, $right, array($Model->escapeField($root) => $node[$root]))+1;
 			} else {
 				// Move to the end of new tree
-				$node[$root] = $this->_max($Model, $root)+1;
+				$node[$root] = null;
 				$node[$parent] = null;
 				if ( !empty($level) )
 					$node[$level] = 0;
@@ -385,7 +404,7 @@ class MultiTreeBehavior extends ModelBehavior {
  * @return boolean true on success, false on failure
  * @access public
  */
-	function removeFromTree(&$Model, $id = null, $deleteChildren = true) {
+	function removeFromTree(&$Model, $id = null, $deleteChildren = false) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
 		}
@@ -478,17 +497,25 @@ class MultiTreeBehavior extends ModelBehavior {
  * @return array Array of child nodes
  * @access public
  */
-	function getChildren(&$Model, $id = null, $direct = false, $includeNode = false, $fields = null, $order = null, $limit = null, $recursive = null) {
-		$overrideRecursive = $recursive;
+	function getChildren(&$Model, $id = null, $options = array()) {
+		$options = Set::merge(
+			array(
+				'direct' => false,
+				'includeNode' => false,
+				'fields' => null,
+				'order' => null,
+				'limit' => null,
+				'sort' => 'asc'
+			),
+			$this->settings[$Model->alias],
+			$options
+		);
+		extract($options);
 		if (!$id && $Model->id) {
 			$id = $Model->id;
 		}
-		extract($this->settings[$Model->alias]);
-		if (!is_null($overrideRecursive)) {
-			$recursive = $overrideRecursive;
-		}
 		if (!$order) {
-			$order = array($Model->escapeField($left) => 'asc');
+			$order = array($Model->escapeField($left) => $sort);
 		}
 		if ( $direct ) {
 			$conditions = array($Model->escapeField($parent) => $id);
@@ -847,7 +874,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$Model->escapeField('parent_id') => NULL
 			);
 		// Get path to node
-		return $Model->find('all', array(
+		return $Model->find('first', array(
 			'fields' => $fields,
 			'conditions' => $conditions,
 			'order' => array($Model->escapeField($left) => 'asc'),
@@ -1165,7 +1192,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	function __delete(&$Model, $id) {
 		return $Model->deleteAll(array(
 			$Model->escapeField() => $id
-			), true, false);
+			), true, $callbacks);
 	}
 	
 	/**
@@ -1184,7 +1211,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			);
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $rootId;
-		return $Model->deleteAll($conditions, true, false);
+		return $Model->deleteAll($conditions, true, $callbacks);
 	}
 }
 ?>
