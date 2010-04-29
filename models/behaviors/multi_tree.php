@@ -1192,7 +1192,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	function __delete(&$Model, $id) {
 		return $Model->deleteAll(array(
 			$Model->escapeField() => $id
-			), true, $callbacks);
+			), true, $this->settings[$Model->alias]['callbacks']);
 	}
 	
 	/**
