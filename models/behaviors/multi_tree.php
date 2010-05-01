@@ -284,7 +284,7 @@ class MultiTreeBehavior extends ModelBehavior {
 				$start = $this->_max($Model, $right, array($Model->escapeField($root) => $node[$root]))+1;
 			} else {
 				// Move to the end of new tree
-				$node[$root] = null; // For now..
+				$node[$root] = $id;
 				$node[$parent] = null;
 				if ( !empty($level) )
 					$node[$level] = 0;
@@ -315,12 +315,6 @@ class MultiTreeBehavior extends ModelBehavior {
 				if ( ($commit = $this->_shift($Model, $node[$left], -$treeSize, @$oldNode[$root])) === false )
 					break;
 			}
-			
-			// Change value of root to that of id for all new trees
-			$Model->updateAll(array($Model->escapeField($root) => $Model->escapeField()), array(
-				$Model->escapeField($root) => NULL,
-				$Model->escapeField($parent) => NULL
-				));
 			
 			// We don't want this to actually loop
 			break;
