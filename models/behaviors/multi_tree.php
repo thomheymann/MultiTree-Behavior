@@ -10,7 +10,7 @@
  * @author Thomas Heymann
  * @link http://bakery.cakephp.org/articles/view/multitree-behavior
  * @link http://book.cakephp.org/view/228/Basic-Usage
- * @version	0.2a
+ * @version	0.3
  * @license	http://www.opensource.org/licenses/mit-license.php The MIT License
  * @package app
  * @subpackage app.models.behaviors
@@ -140,23 +140,6 @@ class MultiTreeBehavior extends ModelBehavior {
 		if ( $this->settings[$Model->alias]['__move'] !== false ) {
 			$this->move($Model, $Model->id, $this->settings[$Model->alias]['__move']);
 			$this->settings[$Model->alias]['__move'] = false;
-		}
-		if (!empty($this->settings[$Model->alias]['root'])) {
-			$newTrees = $Model->find('all', array(
-				'conditions' => array(
-					$Model->escapeField($this->settings[$Model->alias]['root']) => NULL,
-					$Model->escapeField($this->settings[$Model->alias]['parent']) => NULL
-				),
-				'callbacks' => false
-			));
-			foreach ($newTrees as &$newTree) {
-				$newTree[$Model->alias][$this->settings[$Model->alias]['root']] = $newTree[$Model->alias]['id'];
-			}
-			foreach ($newTrees as $key => $value) {
-				$newTrees[$key] = $value[$Model->alias];
-			}
-			$newTrees = array($Model->alias => $newTrees);
-			$Model->saveAll($newTrees[$Model->alias], array('callbacks' => false));
 		}
 	}
 	
@@ -301,7 +284,7 @@ class MultiTreeBehavior extends ModelBehavior {
 				$start = $this->_max($Model, $right, array($Model->escapeField($root) => $node[$root]))+1;
 			} else {
 				// Move to the end of new tree
-				$node[$root] = null;
+				$node[$root] = null; // For now..
 				$node[$parent] = null;
 				if ( !empty($level) )
 					$node[$level] = 0;
@@ -332,6 +315,12 @@ class MultiTreeBehavior extends ModelBehavior {
 				if ( ($commit = $this->_shift($Model, $node[$left], -$treeSize, @$oldNode[$root])) === false )
 					break;
 			}
+			
+			// Change value of root to that of id for all new trees
+			$Model->updateAll(array($Model->escapeField($root) => $Model->escapeField()), array(
+				$Model->escapeField($root) => NULL,
+				$Model->escapeField($parent) => NULL
+				));
 			
 			// We don't want this to actually loop
 			break;
