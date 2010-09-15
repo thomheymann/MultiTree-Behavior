@@ -225,12 +225,14 @@ class MultiTreeBehavior extends ModelBehavior {
 				// Set beginning of shift range
 				switch ( $position ) {
 					case 'prevSibling':
+					case 'before':
 						$node[$parent] = $destNode[$parent];
 						if ( !empty($level) )
 							$node[$level] = $destNode[$level];
 						$start = $destNode[$left];
 						break;
 					case 'nextSibling':
+					case 'after':
 						$node[$parent] = $destNode[$parent];
 						if ( !empty($level) )
 							$node[$level] = $destNode[$level];
