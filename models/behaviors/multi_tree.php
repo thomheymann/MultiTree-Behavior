@@ -30,6 +30,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		'right' => 'rght',
 		'root' => 'root_id', // optional, allow multiple trees per table
 		'level' => 'level', // optional, cache levels
+		'filter' => null, // i.e. group_id, for gruoping trees and repair only this gorup
 		'dependent' => false,
 		'callbacks' => true,
 		
@@ -65,6 +66,10 @@ class MultiTreeBehavior extends ModelBehavior {
 				// if ( !$Model->hasField($this->settings[$Model->alias]['root']) )
 				$this->settings[$Model->alias]['__treeFields'][] = $this->settings[$Model->alias]['root'];
 			}
+			if ( !empty($this->settings[$Model->alias]['fiter']) ) {
+				// if ( !$Model->hasField($this->settings[$Model->alias]['root']) )
+				$this->settings[$Model->alias]['__treeFields'][] = $this->settings[$Model->alias]['filter'];
+			}
 			if ( !empty($this->settings[$Model->alias]['level']) ) {
 				// if ( !$Model->hasField($this->settings[$Model->alias]['level']) )
 				$this->settings[$Model->alias]['__treeFields'][] = $this->settings[$Model->alias]['level'];
@@ -87,7 +92,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		// Check if we need to perform changes to the tree
 		if ( isset($Model->data[$Model->alias][$parent]) ) {
 			// Get node
-			if ( !$creating && ($node = $this->_node(&$Model, $Model->id)) === false ) {
+			if ( !$creating && ($node = $this->_node($Model, $Model->id)) === false ) {
 				return false;
 			}
 			// Accept array with position information
@@ -103,7 +108,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			// Any parent changes?
 			if ( $creating || $Model->data[$Model->alias][$parent] != $node[$parent] ) {
 				// Check if parent axists
-				if ( !empty($Model->data[$Model->alias][$parent]) && ($destNode = $this->_node(&$Model, $Model->data[$Model->alias][$parent])) === false ) {
+				if ( !empty($Model->data[$Model->alias][$parent]) && ($destNode = $this->_node($Model, $Model->data[$Model->alias][$parent])) === false ) {
 					$Model->invalidate($parent, 'Parent does not exist');
 					return false;
 				}
@@ -112,7 +117,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			}
 		} else if ( !empty($root) && isset($Model->data[$Model->alias][$root]) ) {
 			// Get node
-			if ( !$creating && ($node = $this->_node(&$Model, $Model->id)) === false ) {
+			if ( !$creating && ($node = $this->_node($Model, $Model->id)) === false ) {
 				return false;
 			}
 			// Any root changes?
@@ -184,7 +189,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		}
 		
 		// Get node
-		if ( ($node = $this->_node(&$Model, $id)) === false ) {
+		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
 		}
 		$oldNode = $node;
@@ -209,7 +214,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			// Are we moving to another node?
 			if ( !empty($dest['parent']) ) {
 				// Get destination node
-				if ( ($destNode = $this->_node(&$Model, $dest['parent'])) === false ) {
+				if ( ($destNode = $this->_node($Model, $dest['parent'])) === false ) {
 					// return false;
 					$Model->invalidate($parent, 'Parent does not exist');
 					$commit = false;
@@ -400,7 +405,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$node = $id;
 			$id = $node[$Model->primaryKey];
 		} else {
-			if ( ($node = $this->_node(&$Model, $id)) === false ) {
+			if ( ($node = $this->_node($Model, $id)) === false ) {
 				return false;
 			}
 		}
@@ -1043,9 +1048,23 @@ class MultiTreeBehavior extends ModelBehavior {
 				break;
 			
 			case 'tree':
+			    //				debug($Model->data);
+//				debug ($this->settings[$Model->alias]['filter'] );
+//				debug($Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']]);
 				// Null out all tree values except for parent
-				$data = array_fill_keys(array_diff($__treeFields, array($parent)), null); // PHP5.2
-				$Model->updateAll($data, array($this->settings[$Model->alias]['root'] =>  $Model->alias[$this->settings[$Model->alias]['root']]));				
+				$data = array_fill_keys(array_diff($__treeFields, array($parent,$root)), null); // PHP5.2
+	
+				if(!is_null($Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']])) 
+				    $filter = $Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']];
+				
+				else if (!is_null($Model->data[$Model->alias][$this->settings[$Model->alias]['filter']])) 
+				    $filter = $Model->data[$Model->alias][$this->settings[$Model->alias]['filter']];
+				
+				if(!isset($filter)) 
+				    $Model->updateAll($data);
+				else 
+				    $Model->updateAll($data, array($this->settings[$Model->alias]['filter'] =>  $filter));
+				
 				// Move nodes back into tree structure, one after the other
 				$nodes = $Model->find('all', array(
 					'fields' => array_merge(array($Model->primaryKey), $__treeFields),
