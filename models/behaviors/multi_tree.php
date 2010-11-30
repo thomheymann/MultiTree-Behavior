@@ -1045,7 +1045,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			case 'tree':
 				// Null out all tree values except for parent
 				$data = array_fill_keys(array_diff($__treeFields, array($parent)), null); // PHP5.2
-				$Model->updateAll($data);
+				$Model->updateAll($data, array($this->settings[$Model->alias]['root'] =>  $Model->alias[$this->settings[$Model->alias]['root']]));				
 				// Move nodes back into tree structure, one after the other
 				$nodes = $Model->find('all', array(
 					'fields' => array_merge(array($Model->primaryKey), $__treeFields),
