@@ -87,7 +87,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		// Check if we need to perform changes to the tree
 		if ( isset($Model->data[$Model->alias][$parent]) ) {
 			// Get node
-			if ( !$creating && ($node = $this->_node(&$Model, $Model->id)) === false ) {
+			if ( !$creating && ($node = $this->_node($Model, $Model->id)) === false ) {
 				return false;
 			}
 			// Accept array with position information
@@ -103,7 +103,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			// Any parent changes?
 			if ( $creating || $Model->data[$Model->alias][$parent] != $node[$parent] ) {
 				// Check if parent axists
-				if ( !empty($Model->data[$Model->alias][$parent]) && ($destNode = $this->_node(&$Model, $Model->data[$Model->alias][$parent])) === false ) {
+				if ( !empty($Model->data[$Model->alias][$parent]) && ($destNode = $this->_node($Model, $Model->data[$Model->alias][$parent])) === false ) {
 					$Model->invalidate($parent, 'Parent does not exist');
 					return false;
 				}
@@ -112,7 +112,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			}
 		} else if ( !empty($root) && isset($Model->data[$Model->alias][$root]) ) {
 			// Get node
-			if ( !$creating && ($node = $this->_node(&$Model, $Model->id)) === false ) {
+			if ( !$creating && ($node = $this->_node($Model, $Model->id)) === false ) {
 				return false;
 			}
 			// Any root changes?
@@ -184,7 +184,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		}
 		
 		// Get node
-		if ( ($node = $this->_node(&$Model, $id)) === false ) {
+		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
 		}
 		$oldNode = $node;
@@ -209,7 +209,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			// Are we moving to another node?
 			if ( !empty($dest['parent']) ) {
 				// Get destination node
-				if ( ($destNode = $this->_node(&$Model, $dest['parent'])) === false ) {
+				if ( ($destNode = $this->_node($Model, $dest['parent'])) === false ) {
 					// return false;
 					$Model->invalidate($parent, 'Parent does not exist');
 					$commit = false;
@@ -400,7 +400,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$node = $id;
 			$id = $node[$Model->primaryKey];
 		} else {
-			if ( ($node = $this->_node(&$Model, $id)) === false ) {
+			if ( ($node = $this->_node($Model, $id)) === false ) {
 				return false;
 			}
 		}
