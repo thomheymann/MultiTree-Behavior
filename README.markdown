@@ -41,7 +41,7 @@ The following config is meant for large trees that are often updated as well a r
 	  PRIMARY KEY  (`id`),
 	  KEY `rght` USING BTREE (`root_id`,`rght`,`lft`),
 	  KEY `lft` USING BTREE (`root_id`,`lft`,`rght`),
-	  KEY `parent_id` USING BTREE (`parent_id`,`sticky`,`created`)
+	  KEY `parent_id` USING BTREE (`parent_id`,`created`)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 ### Example 2
