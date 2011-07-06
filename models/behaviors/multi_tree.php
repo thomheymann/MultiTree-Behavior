@@ -1101,6 +1101,21 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @access protected
 	 * @return void
 	 **/
+	function _min(&$Model, $field, $conditions = null) {
+		$max = $Model->find('all', array(
+			'fields' => $Model->getDataSource()->calculate($Model, 'min', array($Model->escapeField($field), $field)),
+			'conditions' => $conditions,
+			'recursive' => -1
+		));
+		return (int)(reset(reset(reset($max))));
+	}
+	
+	/**
+	 * undocumented function
+	 *
+	 * @access protected
+	 * @return void
+	 **/
  	function _shift(&$Model, $first, $delta, $rootId = 1) {
 		extract($this->settings[$Model->alias]);
 		
@@ -1197,6 +1212,101 @@ class MultiTreeBehavior extends ModelBehavior {
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $rootId;
 		return $Model->deleteAll($conditions, true, $callbacks);
+	}
+	
+	/**
+	 * Check if the current tree is valid.
+	 *
+	 * Returns true if the tree is valid otherwise an array of (type, incorrect left/right index, message)
+	 *
+	 * @param AppModel $Model Model instance
+	 * @return mixed true if the tree is valid or empty, otherwise an array of (error type [index, node],
+	 *  [incorrect left/right index,node id], message)
+	 * @access public
+	 * @link http://book.cakephp.org/view/1630/Verify
+	 */
+	function verify(&$Model) {
+		extract($this->settings[$Model->alias]);
+		$rootNodes = $Model->find('list', array('conditions' => array( $Model->escapeField($parent) => null)));
+		
+		$errors = array();
+		$errorDetected = false;
+		foreach(array_keys($rootNodes) as $rootNodeId) {
+			$key = "treeId-" . $rootNodeId;
+			$errors[$key] = $this->_verifyTree($Model, $rootNodeId);
+			if($errors[$key] !== true) {
+				$errorDetected = true;
+			}
+		}
+		
+		if(!$errorDetected) {
+			return true;
+		}
+		
+		return $errors;
+	}
+	
+	function _verifyTree(&$Model, $rootNodeId) {
+		extract($this->settings[$Model->alias]);
+		$scope = array($Model->escapeField($root) => $rootNodeId);
+		if (!$Model->find('count', array('conditions' => $scope))) {
+			return true;
+		}
+
+		$min = $this->_min($Model, $left, $scope);
+		$edge = $this->_max($Model, $right, $scope);
+		$errors =  array();
+
+		for ($i = $min; $i <= $edge; $i++) {
+			$count = $Model->find('count', array('conditions' => array(
+				$scope, 'OR' => array($Model->escapeField($left) => $i, $Model->escapeField($right) => $i)
+			)));
+			
+			if ($count != 1) {
+				if ($count == 0) {
+					$errors[] = array('index', $i, 'missing');
+				} else {
+					$errors[] = array('index', $i, 'duplicate');
+				}
+			}
+		}
+		$node = $Model->find('first', array('conditions' => array($scope, $Model->escapeField($right) . '< ' . $Model->escapeField($left)), 'recursive' => 0));
+		if ($node) {
+			$errors[] = array('node', $node[$Model->alias][$Model->primaryKey], 'left greater than right.');
+		}
+
+		$Model->bindModel(array('belongsTo' => array('VerifyParent' => array(
+			'className' => $Model->alias,
+			'foreignKey' => $parent,
+			'fields' => array($Model->primaryKey, $left, $right, $parent)
+		))));
+
+		foreach ($Model->find('all', array('conditions' => $scope, 'recursive' => 0)) as $instance) {
+			if (is_null($instance[$Model->alias][$left]) || is_null($instance[$Model->alias][$right])) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+					'has invalid left or right values');
+			} elseif ($instance[$Model->alias][$left] == $instance[$Model->alias][$right]) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+					'left and right values identical');
+			} elseif ($instance[$Model->alias][$parent]) {
+				if (!$instance['VerifyParent'][$Model->primaryKey]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'The parent node ' . $instance[$Model->alias][$parent] . ' doesn\'t exist');
+				} elseif ($instance[$Model->alias][$left] < $instance['VerifyParent'][$left]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'left less than parent (node ' . $instance['VerifyParent'][$Model->primaryKey] . ').');
+				} elseif ($instance[$Model->alias][$right] > $instance['VerifyParent'][$right]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'right greater than parent (node ' . $instance['VerifyParent'][$Model->primaryKey] . ').');
+				}
+			} elseif ($Model->find('count', array('conditions' => array($scope, $Model->escapeField($left) . ' <' => $instance[$Model->alias][$left], $Model->escapeField($right) . ' >' => $instance[$Model->alias][$right]), 'recursive' => 0))) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey], 'The parent field is blank, but has a parent');
+			}
+		}
+		if ($errors) {
+			return $errors;
+		}
+		return true;
 	}
 }
 ?>
