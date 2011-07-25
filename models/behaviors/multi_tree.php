@@ -1226,6 +1226,12 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @link http://book.cakephp.org/view/1630/Verify
 	 */
 	function verify(&$Model) {
+		
+		// check if the model has a dedicated root_id field
+		if(empty($this->settings[$Model->alias]['root'])) {
+			die('The verify method is only supported on trees with a specified root node column. See \'root\' configuration property of MultiTree Behavior.');
+		}
+		
 		extract($this->settings[$Model->alias]);
 		$rootNodes = $Model->find('list', array('conditions' => array( $Model->escapeField($parent) => null)));
 		
