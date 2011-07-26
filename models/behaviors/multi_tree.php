@@ -161,7 +161,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
 	function afterDelete(&$Model) {
 		if ( $this->settings[$Model->alias]['__delete'] !== false ) {
-			$this->removeFromTree($Model, $this->settings[$Model->alias]['__delete'], $this->settings[$Model->alias]['dependent']);
+			$this->_removeFromTree($Model, $this->settings[$Model->alias]['__delete'], $this->settings[$Model->alias]['dependent']);
 			$this->settings[$Model->alias]['__delete'] = false;
 		}
 	}
@@ -387,9 +387,9 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @param integer $id The ID of the record to remove
 	 * @param boolean $deleteChildren whether to delete the children while deleting the node (if any)
 	 * @return boolean true on success, false on failure
-	 * @access public
+	 * @access protected
 	 */
-	function removeFromTree(&$Model, $id = null, $deleteChildren = false) {
+	function _removeFromTree(&$Model, $id = null, $deleteChildren = false) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
 		}
@@ -1220,8 +1220,8 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * Returns true if the tree is valid otherwise an array of (type, incorrect left/right index, message)
 	 *
 	 * @param AppModel $Model Model instance
-	 * @return mixed true if the tree is valid or empty, otherwise an array of (error type [index, node],
-	 *  [incorrect left/right index,node id], message)
+	 * @return mixed true if the tree is valid or empty, otherwise an array of erroneous trees each containing the list of detected 
+	 *  errors (error type [index, node], [incorrect left/right index,node id], message)
 	 * @access public
 	 * @link http://book.cakephp.org/view/1630/Verify
 	 */
@@ -1252,6 +1252,16 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $errors;
 	}
 	
+	/**
+	 *
+	 * Verifies a single tree starting with it's root node.
+	 * 
+	 * @param AppModel $Model Model instance
+	 * @param int $rootNodeId
+	 * @return string mixed true if the tree is valid or empty, otherwise an array of (error type [index, node],
+	 *  [incorrect left/right index,node id], message)
+	 * @access protected
+	 */
 	function _verifyTree(&$Model, $rootNodeId) {
 		extract($this->settings[$Model->alias]);
 		$scope = array($Model->escapeField($root) => $rootNodeId);
