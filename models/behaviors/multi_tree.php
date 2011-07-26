@@ -161,7 +161,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
 	function afterDelete(&$Model) {
 		if ( $this->settings[$Model->alias]['__delete'] !== false ) {
-			$this->removeFromTree($Model, $this->settings[$Model->alias]['__delete'], $this->settings[$Model->alias]['dependent']);
+			$this->_removeFromTree($Model, $this->settings[$Model->alias]['__delete'], $this->settings[$Model->alias]['dependent']);
 			$this->settings[$Model->alias]['__delete'] = false;
 		}
 	}
@@ -331,17 +331,17 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $commit;
 	}
 	
-/**
- * Reorder the node without changing the parent.
- *
- * If the node is the first child, or is a top level node with no previous node this method will return false
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to move
- * @param mixed $number how many places to move the node, or true to move to first position
- * @return boolean true on success, false on failure
- * @access public
- */
+	/**
+	 * Reorder the node without changing the parent.
+	 *
+	 * If the node is the first child, or is a top level node with no previous node this method will return false
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to move
+	 * @param mixed $number how many places to move the node, or true to move to first position
+	 * @return boolean true on success, false on failure
+	 * @access public
+	 */
 	function moveUp(&$Model, $id = null, $number = 1) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
@@ -354,17 +354,17 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $this->move($Model, $id, $prevSiblings[$number-1][$Model->alias][$Model->primaryKey], 'prevSibling');
 	}
 	
-/**
- * Reorder the node without changing the parent.
- *
- * If the node is the last child, or is a top level node with no subsequent node this method will return false
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to move
- * @param mixed $number how many places to move the node or true to move to last position
- * @return boolean true on success, false on failure
- * @access public
- */
+	/**
+	 * Reorder the node without changing the parent.
+	 *
+	 * If the node is the last child, or is a top level node with no subsequent node this method will return false
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to move
+	 * @param mixed $number how many places to move the node or true to move to last position
+	 * @return boolean true on success, false on failure
+	 * @access public
+	 */
 	function moveDown(&$Model, $id = null, $number = 1) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
@@ -377,19 +377,19 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $this->move($Model, $id, $nextSiblings[$number-1][$Model->alias][$Model->primaryKey], 'nextSibling');
 	}
 	
-/**
- * Remove the current node from the tree, and reparent all children up one level.
- *
- * If the parameter delete is false, the node will become a new top level node. Otherwise the node will be deleted
- * after the children are reparented.
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to remove
- * @param boolean $deleteChildren whether to delete the children while deleting the node (if any)
- * @return boolean true on success, false on failure
- * @access public
- */
-	function removeFromTree(&$Model, $id = null, $deleteChildren = false) {
+	/**
+	 * Remove the current node from the tree, and reparent all children up one level.
+	 *
+	 * If the parameter delete is false, the node will become a new top level node. Otherwise the node will be deleted
+	 * after the children are reparented.
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to remove
+	 * @param boolean $deleteChildren whether to delete the children while deleting the node (if any)
+	 * @return boolean true on success, false on failure
+	 * @access protected
+	 */
+	function _removeFromTree(&$Model, $id = null, $deleteChildren = false) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
 		}
@@ -465,23 +465,23 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $commit;
 	}
 	
-/**
- * Get the child nodes of the current model
- *
- * If the direct parameter is set to true, only the direct children are returned (based upon the parent_id field (and root_id if set))
- * If false is passed for the id parameter, top level, or all (depending on direct parameter appropriate) are counted.
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param boolean $direct whether to return only the direct, or all, children
- * @param boolean $includeNode Whether or not to include the current node
- * @param mixed $fields Either a single string of a field name, or an array of field names
- * @param string $order SQL ORDER BY conditions (e.g. "price DESC" or "name ASC") defaults to the tree order
- * @param integer $limit SQL LIMIT clause, for calculating items per page.
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array Array of child nodes
- * @access public
- */
+	/**
+	 * Get the child nodes of the current model
+	 *
+	 * If the direct parameter is set to true, only the direct children are returned (based upon the parent_id field (and root_id if set))
+	 * If false is passed for the id parameter, top level, or all (depending on direct parameter appropriate) are counted.
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param boolean $direct whether to return only the direct, or all, children
+	 * @param boolean $includeNode Whether or not to include the current node
+	 * @param mixed $fields Either a single string of a field name, or an array of field names
+	 * @param string $order SQL ORDER BY conditions (e.g. "price DESC" or "name ASC") defaults to the tree order
+	 * @param integer $limit SQL LIMIT clause, for calculating items per page.
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array Array of child nodes
+	 * @access public
+	 */
 	function getChildren(&$Model, $id = null, $options = array()) {
 		$options = Set::merge(
 			array(
@@ -546,18 +546,18 @@ class MultiTreeBehavior extends ModelBehavior {
 			));
 	}
 	
-/**
- * Get the number of child nodes
- *
- * If the direct parameter is set to true, only the direct children are counted (based upon the parent_id field)
- * If false is passed for the id parameter, all top level nodes are counted, or all nodes are counted.
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param boolean $direct whether to count direct, or all, children
- * @return integer number of child nodes
- * @access public
- */
+	/**
+	 * Get the number of child nodes
+	 *
+	 * If the direct parameter is set to true, only the direct children are counted (based upon the parent_id field)
+	 * If false is passed for the id parameter, all top level nodes are counted, or all nodes are counted.
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param boolean $direct whether to count direct, or all, children
+	 * @return integer number of child nodes
+	 * @access public
+	 */
 	function getChildCount(&$Model, $id = null, $direct = false) {
 		if (!$id && $Model->id) {
 			$id = $Model->id;
@@ -753,17 +753,17 @@ class MultiTreeBehavior extends ModelBehavior {
 			));
 	}
 	
-/**
- * Get the parent node
- *
- * reads the parent id and returns this node
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array Array of data for the parent node
- * @access public
- */
+	/**
+	 * Get the parent node
+	 *
+	 * reads the parent id and returns this node
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array Array of data for the parent node
+	 * @access public
+	 */
 	function getParent(&$Model, $id = null, $fields = null, $recursive = null) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
@@ -786,17 +786,17 @@ class MultiTreeBehavior extends ModelBehavior {
 			));
 	}
 	
-/**
- * Get the parent node
- *
- * reads the parent id and returns this node in the current tree defined by root_id (if set)
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array Array of data for the parent node
- * @access public
- */
+	/**
+	 * Get the parent node
+	 *
+	 * reads the parent id and returns this node in the current tree defined by root_id (if set)
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array Array of data for the parent node
+	 * @access public
+	 */
 	function getParentFromTree(&$Model, $id = null, $fields = null, $recursive = null) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
@@ -827,16 +827,16 @@ class MultiTreeBehavior extends ModelBehavior {
 			));
 	}
 
-/**
- * Get the root to the given node
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param mixed $fields Either a single string of a field name, or an array of field names
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array Top most parent node
- * @access public
- */
+	/**
+	 * Get the root to the given node
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param mixed $fields Either a single string of a field name, or an array of field names
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array Top most parent node
+	 * @access public
+	 */
 	function getRoot(&$Model, $id = null, $fields = null, $recursive = null) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
@@ -867,16 +867,16 @@ class MultiTreeBehavior extends ModelBehavior {
 			));
 	}
 	
-/**
- * Get the path to the given node
- *
- * @param AppModel $Model Model instance
- * @param integer $id The ID of the record to read
- * @param mixed $fields Either a single string of a field name, or an array of field names
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array Array of nodes from top most parent to current node
- * @access public
- */
+	/**
+	 * Get the path to the given node
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param integer $id The ID of the record to read
+	 * @param mixed $fields Either a single string of a field name, or an array of field names
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array Array of nodes from top most parent to current node
+	 * @access public
+	 */
 	function getPath(&$Model, $id = null, $fields = null, $recursive = null) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
@@ -936,18 +936,18 @@ class MultiTreeBehavior extends ModelBehavior {
 		return $Model->find('count', array('conditions' => $conditions));
 	}
 
-/**
- * A convenience method for returning a hierarchical array used for HTML select boxes
- *
- * @param AppModel $Model Model instance
- * @param mixed $conditions SQL conditions as a string or as an array('field' =>'value',...)
- * @param string $keyPath A string path to the key, i.e. "{n}.Post.id"
- * @param string $valuePath A string path to the value, i.e. "{n}.Post.title"
- * @param string $spacer The character or characters which will be repeated
- * @param integer $recursive The number of levels deep to fetch associated records
- * @return array An associative array of records, where the id is the key, and the display field is the value
- * @access public
- */
+	/**
+	 * A convenience method for returning a hierarchical array used for HTML select boxes
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param mixed $conditions SQL conditions as a string or as an array('field' =>'value',...)
+	 * @param string $keyPath A string path to the key, i.e. "{n}.Post.id"
+	 * @param string $valuePath A string path to the value, i.e. "{n}.Post.title"
+	 * @param string $spacer The character or characters which will be repeated
+	 * @param integer $recursive The number of levels deep to fetch associated records
+	 * @return array An associative array of records, where the id is the key, and the display field is the value
+	 * @access public
+	 */
 	function generateTreeList(&$Model, $conditions = null, $keyPath = null, $valuePath = null, $spacer = '_', $recursive = null) {
 		$overrideRecursive = $recursive;
 		extract($this->settings[$Model->alias]);
@@ -1009,18 +1009,18 @@ class MultiTreeBehavior extends ModelBehavior {
 		
 	}
 	
-/**
- * Repair a corrupted tree
- *
- * The broken parameter is used to specify the source of info that is invalid/incorrect. The source of data
- * will be populated based upon the opposite source of info. E.g. if the MPTT fields are corrupt or empty, with the $broken
- * 'tree' the values of the parent_id field will be used to populate the left and right fields.
- *
- * @param AppModel $Model Model instance
- * @param string $broken parent or tree
- * @return boolean true on success, false on failure
- * @access public
- */
+	/**
+	 * Repair a corrupted tree
+	 *
+	 * The broken parameter is used to specify the source of info that is invalid/incorrect. The source of data
+	 * will be populated based upon the opposite source of info. E.g. if the MPTT fields are corrupt or empty, with the $broken
+	 * 'tree' the values of the parent_id field will be used to populate the left and right fields.
+	 *
+	 * @param AppModel $Model Model instance
+	 * @param string $broken parent or tree
+	 * @return boolean true on success, false on failure
+	 * @access public
+	 */
 	function repair(&$Model, $broken = 'tree') {
 		extract($this->settings[$Model->alias]);
 		$Model->recursive = $recursive;
@@ -1089,6 +1089,21 @@ class MultiTreeBehavior extends ModelBehavior {
 	function _max(&$Model, $field, $conditions = null) {
 		$max = $Model->find('all', array(
 			'fields' => $Model->getDataSource()->calculate($Model, 'max', array($Model->escapeField($field), $field)),
+			'conditions' => $conditions,
+			'recursive' => -1
+		));
+		return (int)(reset(reset(reset($max))));
+	}
+	
+	/**
+	 * undocumented function
+	 *
+	 * @access protected
+	 * @return void
+	 **/
+	function _min(&$Model, $field, $conditions = null) {
+		$max = $Model->find('all', array(
+			'fields' => $Model->getDataSource()->calculate($Model, 'min', array($Model->escapeField($field), $field)),
 			'conditions' => $conditions,
 			'recursive' => -1
 		));
@@ -1197,6 +1212,117 @@ class MultiTreeBehavior extends ModelBehavior {
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $rootId;
 		return $Model->deleteAll($conditions, true, $callbacks);
+	}
+	
+	/**
+	 * Check if the current tree is valid.
+	 *
+	 * Returns true if the tree is valid otherwise an array of (type, incorrect left/right index, message)
+	 *
+	 * @param AppModel $Model Model instance
+	 * @return mixed true if the tree is valid or empty, otherwise an array of erroneous trees each containing the list of detected 
+	 *  errors (error type [index, node], [incorrect left/right index,node id], message)
+	 * @access public
+	 * @link http://book.cakephp.org/view/1630/Verify
+	 */
+	function verify(&$Model) {
+		
+		// check if the model has a dedicated root_id field
+		if(empty($this->settings[$Model->alias]['root'])) {
+			die('The verify method is only supported on trees with a specified root node column. See \'root\' configuration property of MultiTree Behavior.');
+		}
+		
+		extract($this->settings[$Model->alias]);
+		$rootNodes = $Model->find('list', array('conditions' => array( $Model->escapeField($parent) => null)));
+		
+		$errors = array();
+		$errorDetected = false;
+		foreach(array_keys($rootNodes) as $rootNodeId) {
+			$key = "treeId-" . $rootNodeId;
+			$errors[$key] = $this->_verifyTree($Model, $rootNodeId);
+			if($errors[$key] !== true) {
+				$errorDetected = true;
+			}
+		}
+		
+		if(!$errorDetected) {
+			return true;
+		}
+		
+		return $errors;
+	}
+	
+	/**
+	 *
+	 * Verifies a single tree starting with it's root node.
+	 * 
+	 * @param AppModel $Model Model instance
+	 * @param int $rootNodeId
+	 * @return string mixed true if the tree is valid or empty, otherwise an array of (error type [index, node],
+	 *  [incorrect left/right index,node id], message)
+	 * @access protected
+	 */
+	function _verifyTree(&$Model, $rootNodeId) {
+		extract($this->settings[$Model->alias]);
+		$scope = array($Model->escapeField($root) => $rootNodeId);
+		if (!$Model->find('count', array('conditions' => $scope))) {
+			return true;
+		}
+
+		$min = $this->_min($Model, $left, $scope);
+		$edge = $this->_max($Model, $right, $scope);
+		$errors =  array();
+
+		for ($i = $min; $i <= $edge; $i++) {
+			$count = $Model->find('count', array('conditions' => array(
+				$scope, 'OR' => array($Model->escapeField($left) => $i, $Model->escapeField($right) => $i)
+			)));
+			
+			if ($count != 1) {
+				if ($count == 0) {
+					$errors[] = array('index', $i, 'missing');
+				} else {
+					$errors[] = array('index', $i, 'duplicate');
+				}
+			}
+		}
+		$node = $Model->find('first', array('conditions' => array($scope, $Model->escapeField($right) . '< ' . $Model->escapeField($left)), 'recursive' => 0));
+		if ($node) {
+			$errors[] = array('node', $node[$Model->alias][$Model->primaryKey], 'left greater than right.');
+		}
+
+		$Model->bindModel(array('belongsTo' => array('VerifyParent' => array(
+			'className' => $Model->alias,
+			'foreignKey' => $parent,
+			'fields' => array($Model->primaryKey, $left, $right, $parent)
+		))));
+
+		foreach ($Model->find('all', array('conditions' => $scope, 'recursive' => 0)) as $instance) {
+			if (is_null($instance[$Model->alias][$left]) || is_null($instance[$Model->alias][$right])) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+					'has invalid left or right values');
+			} elseif ($instance[$Model->alias][$left] == $instance[$Model->alias][$right]) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+					'left and right values identical');
+			} elseif ($instance[$Model->alias][$parent]) {
+				if (!$instance['VerifyParent'][$Model->primaryKey]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'The parent node ' . $instance[$Model->alias][$parent] . ' doesn\'t exist');
+				} elseif ($instance[$Model->alias][$left] < $instance['VerifyParent'][$left]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'left less than parent (node ' . $instance['VerifyParent'][$Model->primaryKey] . ').');
+				} elseif ($instance[$Model->alias][$right] > $instance['VerifyParent'][$right]) {
+					$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey],
+						'right greater than parent (node ' . $instance['VerifyParent'][$Model->primaryKey] . ').');
+				}
+			} elseif ($Model->find('count', array('conditions' => array($scope, $Model->escapeField($left) . ' <' => $instance[$Model->alias][$left], $Model->escapeField($right) . ' >' => $instance[$Model->alias][$right]), 'recursive' => 0))) {
+				$errors[] = array('node', $instance[$Model->alias][$Model->primaryKey], 'The parent field is blank, but has a parent');
+			}
+		}
+		if ($errors) {
+			return $errors;
+		}
+		return true;
 	}
 }
 ?>
