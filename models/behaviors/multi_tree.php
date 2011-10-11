@@ -1130,7 +1130,9 @@ class MultiTreeBehavior extends ModelBehavior {
 			);
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $rootId;
-		if ( $Model->updateAll($data, $conditions) === false )
+
+		$limit = 1;
+		if ( ($Model->find('count', compact('conditions', 'limit')) > 0) && $Model->updateAll($data, $conditions) === false )
 			return false;
 		
 		// Shift (right)
