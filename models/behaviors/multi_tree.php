@@ -1,12 +1,12 @@
 <?php
 /**
  * Multi Tree Behaviour Class
- * 
- * MultiTree is a semi-drop-in behaviour to CakePHP's Core Tree Behavior allowing 
+ *
+ * MultiTree is a semi-drop-in behaviour to CakePHP's Core Tree Behavior allowing
  * for more advanced operations and better performance on large data sets
- * 
+ *
  * NOTE: Use InnoDB (or a different engine that supports transactions, otherwise you have to LOCK tables manually during operations to prevent corrupted data in multi user environments)
- * 
+ *
  * @author Thomas Heymann
  * @link http://bakery.cakephp.org/articles/view/multitree-behavior
  * @link http://book.cakephp.org/view/228/Basic-Usage
@@ -16,7 +16,7 @@
  * @subpackage app.models.behaviors
  **/
 class MultiTreeBehavior extends ModelBehavior {
-	
+
 	/**
 	 * undocumented class variable
 	 *
@@ -32,16 +32,16 @@ class MultiTreeBehavior extends ModelBehavior {
 		'level' => 'level', // optional, cache levels
 		'dependent' => false,
 		'callbacks' => true,
-		
+
 		// Other
 		'recursive' => -1,
-		
+
 		// Private
 		'__treeFields' => array(),
 		'__move' => false,
 		'__delete' => false
 	);
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -80,10 +80,10 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
 	function beforeSave(&$Model) {
 		extract($this->settings[$Model->alias]);
-		
+
 		// Are we about to create or edit?
 		$creating = empty($Model->id);
-		
+
 		// Check if we need to perform changes to the tree
 		if ( isset($Model->data[$Model->alias][$parent]) ) {
 			// Get node
@@ -123,13 +123,13 @@ class MultiTreeBehavior extends ModelBehavior {
 		} else if ( $creating ) {
 			$this->settings[$Model->alias]['__move'] = null;
 		}
-		
+
 		// Don't allow manually changing left, right etc.
 		$Model->data[$Model->alias] = array_diff_key($Model->data[$Model->alias], array_flip($__treeFields));
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -142,7 +142,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$this->settings[$Model->alias]['__move'] = false;
 		}
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -152,7 +152,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		$this->settings[$Model->alias]['__delete'] = $this->_node($Model, $Model->id);
 		return true;
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -165,7 +165,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$this->settings[$Model->alias]['__delete'] = false;
 		}
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -182,20 +182,20 @@ class MultiTreeBehavior extends ModelBehavior {
 		} else if ( array_key_exists('position', $dest) ) {
 			$position = $dest['position'];
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
 		}
 		$oldNode = $node;
 		$invalid = (empty($oldNode[$left]) || empty($oldNode[$right]));
-		
+
 		// Start transaction
 		$Model->getDataSource()->begin($Model);
-		
+
 		// Fake loop allowing us to jump to the end on failure
 		while ( $commit = true ) {
-		
+
 			// Get node size
 			if ( $invalid ) {
 				$node[$left] = 1;
@@ -205,7 +205,7 @@ class MultiTreeBehavior extends ModelBehavior {
 				// 	$node[$root] = null;
 			}
 			$treeSize = $node[$right]-$node[$left]+1;
-			
+
 			// Are we moving to another node?
 			if ( !empty($dest['parent']) ) {
 				// Get destination node
@@ -253,11 +253,11 @@ class MultiTreeBehavior extends ModelBehavior {
 				}
 				if ( !empty($root) )
 					$node[$root] = $destNode[$root];
-				
+
 				// Create gap for node in target tree
 				if ( ($commit = $this->_shift($Model, $start, $treeSize, @$destNode[$root])) === false )
 					break;
-				
+
 				// Refresh node record (might have been affected by previous shift)
 				// $node = $this->_node(&$Model, $id); // We can save us this query with the following:
 				if ( ($affectedLeft = (!$invalid && (empty($root) || $node[$root] == $destNode[$root]) && $node[$left] >= $start)) !== false )
@@ -292,7 +292,7 @@ class MultiTreeBehavior extends ModelBehavior {
 					$node[$level] = 0;
 				$start = 1;
 			}
-			
+
 			if ( !$invalid && $treeSize > 2 ) {
 				// Move node into that gap (Save new left, right, root and level)
 				$diff = $start-$node[$left];
@@ -311,17 +311,17 @@ class MultiTreeBehavior extends ModelBehavior {
 				if ( ($commit = ($Model->save($data, array('callbacks' => false, 'validate' => false, 'fieldList' => $__treeFields)) !== false)) === false )
 					break;
 			}
-			
+
 			// Remove gap created while removing node from source tree
 			if ( !$invalid ) {
 				if ( ($commit = $this->_shift($Model, $node[$left], -$treeSize, @$oldNode[$root])) === false )
 					break;
 			}
-			
+
 			// We don't want this to actually loop
 			break;
 		}
-		
+
 		// Commit
 		if ( $commit ) {
 			$Model->getDataSource()->commit($Model);
@@ -330,7 +330,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		}
 		return $commit;
 	}
-	
+
 	/**
 	 * Reorder the node without changing the parent.
 	 *
@@ -353,7 +353,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$number = count($prevSiblings);
 		return $this->move($Model, $id, $prevSiblings[$number-1][$Model->alias][$Model->primaryKey], 'prevSibling');
 	}
-	
+
 	/**
 	 * Reorder the node without changing the parent.
 	 *
@@ -376,7 +376,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$number = count($nextSiblings);
 		return $this->move($Model, $id, $nextSiblings[$number-1][$Model->alias][$Model->primaryKey], 'nextSibling');
 	}
-	
+
 	/**
 	 * Remove the current node from the tree, and reparent all children up one level.
 	 *
@@ -394,7 +394,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$id = $Model->id;
 		}
 		extract($this->settings[$Model->alias]);
-		
+
 		// Get node (or use id as data)
 		if ( is_array($id) ) {
 			$node = $id;
@@ -409,13 +409,13 @@ class MultiTreeBehavior extends ModelBehavior {
 			// Delete invalid nodes just like that
 			return $this->__delete($Model, $id);
 		}
-		
+
 		// Get node size
 		$treeSize = $node[$right]-$node[$left]+1;
-		
+
 		// Start transaction
 		$Model->getDataSource()->begin($Model);
-		
+
 		// Fake loop allowing us to jump to the end on failure
 		while ( $commit = true ) {
 			// Either delete node and all its children - or - delete node and shift its children one level up
@@ -451,11 +451,11 @@ class MultiTreeBehavior extends ModelBehavior {
 				if ( ($commit = $this->_shift($Model, $node[$right], -2, @$node[$root])) === false )
 					break;
 			}
-			
+
 			// We don't want this to actually loop
 			break;
 		}
-		
+
 		// Commit
 		if ( $commit ) {
 			$Model->getDataSource()->commit($Model);
@@ -464,7 +464,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		}
 		return $commit;
 	}
-	
+
 	/**
 	 * Get the child nodes of the current model
 	 *
@@ -515,9 +515,10 @@ class MultiTreeBehavior extends ModelBehavior {
 				'order' => $order,
 				'limit' => $limit,
 				'recursive' => $recursive,
+				'link' => $link
 				));
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -543,9 +544,10 @@ class MultiTreeBehavior extends ModelBehavior {
 			'order' => $order,
 			'limit' => $limit,
 			'recursive' => $recursive,
+			'link' => $link
 			));
 	}
-	
+
 	/**
 	 * Get the number of child nodes
 	 *
@@ -563,7 +565,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$id = $Model->id;
 		}
 		extract($this->settings[$Model->alias]);
-		
+
 		if ( $direct ) {
 			return $Model->find('count', array('conditions' => array($Model->escapeField($parent) => $id)));
 		} else {
@@ -595,7 +597,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -612,7 +614,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -628,7 +630,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -647,7 +649,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -663,7 +665,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -682,7 +684,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -698,7 +700,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
@@ -717,7 +719,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -733,7 +735,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
@@ -752,7 +754,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * Get the parent node
 	 *
@@ -773,7 +775,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
@@ -785,7 +787,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * Get the parent node
 	 *
@@ -806,7 +808,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return false;
@@ -846,7 +848,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -866,7 +868,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * Get the path to the given node
 	 *
@@ -877,7 +879,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @return array Array of nodes from top most parent to current node
 	 * @access public
 	 */
-	function getPath(&$Model, $id = null, $fields = null, $recursive = null) {
+	function getPath(&$Model, $id = null, $fields = null, $recursive = null, $options = array()) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
 			$id = $Model->id;
@@ -886,7 +888,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		// Get node
 		if ( ($node = $this->_node($Model, $id)) === false ) {
 			return array();
@@ -897,8 +899,13 @@ class MultiTreeBehavior extends ModelBehavior {
 			$Model->escapeField($left).' <=' => $node[$left],
 			$Model->escapeField($right).' >=' => $node[$right],
 			);
+		if (!empty($options['conditions'])) {
+			$conditions = array_merge($conditions, $options['conditions']);
+		}
+
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $node[$root];
+
 		// Get path to node
 		return $Model->find('all', array(
 			'fields' => $fields,
@@ -907,7 +914,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			'recursive' => $recursive,
 			));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -932,7 +939,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$Model->escapeField($right).' >' => $node[$right],
 			);
 		if ( !empty($root) )
-			$conditions[$Model->escapeField($root)] = $node[$root];		
+			$conditions[$Model->escapeField($root)] = $node[$root];
 		return $Model->find('count', array('conditions' => $conditions));
 	}
 
@@ -954,7 +961,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if (!is_null($overrideRecursive)) {
 			$recursive = $overrideRecursive;
 		}
-		
+
 		if ( is_numeric($conditions) ) {
 			$results = $this->getChildren($Model, $conditions);
 		} else {
@@ -971,7 +978,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		if ( empty($results) ) {
 			return array();
 		}
-		
+
 		if ($keyPath == null && $valuePath == null && $Model->hasField($Model->displayField)) {
 			$fields = array($Model->primaryKey, $Model->displayField, $root, $left, $right);
 		} else {
@@ -988,7 +995,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$valuePath[0] = '{'.(count($valuePath)-1).'}'.$valuePath[0];
 			$valuePath[] = '{n}.tree_prefix';
 		}
-		
+
 		if ( !empty($level) ) {
 			foreach ( $results as $i => $result ) {
 				$results[$i]['tree_prefix'] = str_repeat($spacer, $result[$Model->alias][$level]);
@@ -1006,9 +1013,9 @@ class MultiTreeBehavior extends ModelBehavior {
 			}
 		}
 		return Set::combine($results, $keyPath, $valuePath);
-		
+
 	}
-	
+
 	/**
 	 * Repair a corrupted tree
 	 *
@@ -1024,7 +1031,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	function repair(&$Model, $broken = 'tree') {
 		extract($this->settings[$Model->alias]);
 		$Model->recursive = $recursive;
-		
+
 		switch ( $broken ) {
 			case 'parent':
 				// Find and set parent of each node using tree structure
@@ -1041,7 +1048,7 @@ class MultiTreeBehavior extends ModelBehavior {
 					$Model->save($node, array('callbacks' => false, 'validate' => false, 'fieldList' => array($parent)));
 				}
 				break;
-			
+
 			case 'tree':
 				// Null out all tree values except for parent
 				$data = array_fill_keys(array_diff($__treeFields, array($parent)), null); // PHP5.2
@@ -1061,7 +1068,7 @@ class MultiTreeBehavior extends ModelBehavior {
 				break;
 		}
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1079,7 +1086,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		}
 		return reset($node);
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1094,7 +1101,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		));
 		return (int)(reset(reset(reset($max))));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1109,7 +1116,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		));
 		return (int)(reset(reset(reset($max))));
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1118,10 +1125,10 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
  	function _shift(&$Model, $first, $delta, $rootId = 1) {
 		extract($this->settings[$Model->alias]);
-		
+
 		$sign = ($delta >= 0) ? ' + ' : ' - ';
 		$delta = abs($delta);
-		
+
 		// Shift (left)
 		$data = array($Model->escapeField($left) => $Model->escapeField($left).$sign.$delta);
 		$conditions = array(
@@ -1130,9 +1137,11 @@ class MultiTreeBehavior extends ModelBehavior {
 			);
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $rootId;
-		if ( $Model->updateAll($data, $conditions) === false )
+
+		$limit = 1;
+		if ( ($Model->find('count', compact('conditions', 'limit')) > 0) && $Model->updateAll($data, $conditions) === false )
 			return false;
-		
+
 		// Shift (right)
 		$data = array($Model->escapeField($right) => $Model->escapeField($right).$sign.$delta);
 		$conditions = array(
@@ -1143,10 +1152,10 @@ class MultiTreeBehavior extends ModelBehavior {
 			$conditions[$Model->escapeField($root)] = $rootId;
 		if ( $Model->updateAll($data, $conditions) === false )
 			return false;
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1155,12 +1164,12 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
  	function _shiftRange(&$Model, $first, $last = 0, $delta, $rootId = 1, $destRootId = 1, $levelDelta = 0) {
 		extract($this->settings[$Model->alias]);
-		
+
 		$sign = ($delta >= 0) ? ' + ' : ' - ';
 		$delta = abs($delta);
 		$levelSign = ($levelDelta >= 0) ? ' + ' : ' - ';
 		$levelDelta = abs($levelDelta);
-		
+
 		// Data
 		$data = array(
 			// $Model->escapeField($root) => $destRootId,
@@ -1171,7 +1180,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$data[$Model->escapeField($root)] = $destRootId;
 		if ( !empty($level) )
 			$data[$Model->escapeField($level)] = $Model->escapeField($level).$levelSign.$levelDelta;
-		
+
 		// Conditions
 		$conditions = array(
 			// $Model->escapeField($root) => $rootId,
@@ -1182,7 +1191,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$conditions[$Model->escapeField($root)] = $rootId;
 		return $Model->updateAll($data, $conditions);
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1194,7 +1203,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$Model->escapeField() => $id
 			), true, $this->settings[$Model->alias]['callbacks']);
 	}
-	
+
 	/**
 	 * undocumented function
 	 *
@@ -1203,7 +1212,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 **/
 	function __deleteRange(&$Model, $first, $last, $rootId = 1) {
 		extract($this->settings[$Model->alias]);
-		
+
 		$conditions = array(
 			// $Model->escapeField($root) => $rootId,
 			$Model->escapeField($left).' >=' => $first,
@@ -1213,28 +1222,28 @@ class MultiTreeBehavior extends ModelBehavior {
 			$conditions[$Model->escapeField($root)] = $rootId;
 		return $Model->deleteAll($conditions, true, $callbacks);
 	}
-	
+
 	/**
 	 * Check if the current tree is valid.
 	 *
 	 * Returns true if the tree is valid otherwise an array of (type, incorrect left/right index, message)
 	 *
 	 * @param AppModel $Model Model instance
-	 * @return mixed true if the tree is valid or empty, otherwise an array of erroneous trees each containing the list of detected 
+	 * @return mixed true if the tree is valid or empty, otherwise an array of erroneous trees each containing the list of detected
 	 *  errors (error type [index, node], [incorrect left/right index,node id], message)
 	 * @access public
 	 * @link http://book.cakephp.org/view/1630/Verify
 	 */
 	function verify(&$Model) {
-		
+
 		// check if the model has a dedicated root_id field
 		if(empty($this->settings[$Model->alias]['root'])) {
 			die('The verify method is only supported on trees with a specified root node column. See \'root\' configuration property of MultiTree Behavior.');
 		}
-		
+
 		extract($this->settings[$Model->alias]);
 		$rootNodes = $Model->find('list', array('conditions' => array( $Model->escapeField($parent) => null)));
-		
+
 		$errors = array();
 		$errorDetected = false;
 		foreach(array_keys($rootNodes) as $rootNodeId) {
@@ -1244,18 +1253,18 @@ class MultiTreeBehavior extends ModelBehavior {
 				$errorDetected = true;
 			}
 		}
-		
+
 		if(!$errorDetected) {
 			return true;
 		}
-		
+
 		return $errors;
 	}
-	
+
 	/**
 	 *
 	 * Verifies a single tree starting with it's root node.
-	 * 
+	 *
 	 * @param AppModel $Model Model instance
 	 * @param int $rootNodeId
 	 * @return string mixed true if the tree is valid or empty, otherwise an array of (error type [index, node],
@@ -1277,7 +1286,7 @@ class MultiTreeBehavior extends ModelBehavior {
 			$count = $Model->find('count', array('conditions' => array(
 				$scope, 'OR' => array($Model->escapeField($left) => $i, $Model->escapeField($right) => $i)
 			)));
-			
+
 			if ($count != 1) {
 				if ($count == 0) {
 					$errors[] = array('index', $i, 'missing');
