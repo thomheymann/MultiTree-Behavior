@@ -879,7 +879,7 @@ class MultiTreeBehavior extends ModelBehavior {
 	 * @return array Array of nodes from top most parent to current node
 	 * @access public
 	 */
-	function getPath(&$Model, $id = null, $fields = null, $recursive = null) {
+	function getPath(&$Model, $id = null, $fields = null, $recursive = null, $options = array()) {
 		$overrideRecursive = $recursive;
 		if (!$id && $Model->id) {
 			$id = $Model->id;
@@ -899,8 +899,13 @@ class MultiTreeBehavior extends ModelBehavior {
 			$Model->escapeField($left).' <=' => $node[$left],
 			$Model->escapeField($right).' >=' => $node[$right],
 			);
+		if (!empty($options['conditions'])) {
+			$conditions = array_merge($conditions, $options['conditions']);
+		}
+
 		if ( !empty($root) )
 			$conditions[$Model->escapeField($root)] = $node[$root];
+
 		// Get path to node
 		return $Model->find('all', array(
 			'fields' => $fields,
