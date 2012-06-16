@@ -251,8 +251,6 @@ class MultiTreeBehavior extends ModelBehavior {
 							$node[$level] = $destNode[$level]+1;
 						$start = $destNode[$right];
 				}
-				if ( !empty($root) )
-					$node[$root] = $destNode[$root];
 				
 				// Create gap for node in target tree
 				if ( ($commit = $this->_shift($Model, $start, $treeSize, @$destNode[$root])) === false )
@@ -264,6 +262,10 @@ class MultiTreeBehavior extends ModelBehavior {
 					$node[$left] += $treeSize;
 				if ( ($affectedRight = (!$invalid && (empty($root) || $node[$root] == $destNode[$root]) && $node[$right] >= $start)) !== false )
 					$node[$right] += $treeSize;
+					
+				if ( !empty($root) )
+					$node[$root] = $destNode[$root];
+          					
 			} else if ( empty($root) ) {
 				// Move to the end of new tree
 				$node[$parent] = null;
