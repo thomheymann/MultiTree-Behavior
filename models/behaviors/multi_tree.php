@@ -30,6 +30,7 @@ class MultiTreeBehavior extends ModelBehavior {
 		'right' => 'rght',
 		'root' => 'root_id', // optional, allow multiple trees per table
 		'level' => 'level', // optional, cache levels
+		'filter' => null, // i.e. group_id, for gruoping trees and repair only this gorup
 		'dependent' => false,
 		'callbacks' => true,
 		
@@ -64,6 +65,10 @@ class MultiTreeBehavior extends ModelBehavior {
 			if ( !empty($this->settings[$Model->alias]['root']) ) {
 				// if ( !$Model->hasField($this->settings[$Model->alias]['root']) )
 				$this->settings[$Model->alias]['__treeFields'][] = $this->settings[$Model->alias]['root'];
+			}
+			if ( !empty($this->settings[$Model->alias]['fiter']) ) {
+				// if ( !$Model->hasField($this->settings[$Model->alias]['root']) )
+				$this->settings[$Model->alias]['__treeFields'][] = $this->settings[$Model->alias]['filter'];
 			}
 			if ( !empty($this->settings[$Model->alias]['level']) ) {
 				// if ( !$Model->hasField($this->settings[$Model->alias]['level']) )
@@ -1045,9 +1050,23 @@ class MultiTreeBehavior extends ModelBehavior {
 				break;
 			
 			case 'tree':
+			    //				debug($Model->data);
+//				debug ($this->settings[$Model->alias]['filter'] );
+//				debug($Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']]);
 				// Null out all tree values except for parent
-				$data = array_fill_keys(array_diff($__treeFields, array($parent)), null); // PHP5.2
-				$Model->updateAll($data);
+				$data = array_fill_keys(array_diff($__treeFields, array($parent,$root)), null); // PHP5.2
+	
+				if(!is_null($Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']])) 
+				    $filter = $Model->data[0][$Model->alias][$this->settings[$Model->alias]['filter']];
+				
+				else if (!is_null($Model->data[$Model->alias][$this->settings[$Model->alias]['filter']])) 
+				    $filter = $Model->data[$Model->alias][$this->settings[$Model->alias]['filter']];
+				
+				if(!isset($filter)) 
+				    $Model->updateAll($data);
+				else 
+				    $Model->updateAll($data, array($this->settings[$Model->alias]['filter'] =>  $filter));
+				
 				// Move nodes back into tree structure, one after the other
 				$nodes = $Model->find('all', array(
 					'fields' => array_merge(array($Model->primaryKey), $__treeFields),
